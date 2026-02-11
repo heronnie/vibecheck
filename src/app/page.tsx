@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart,
@@ -179,6 +179,23 @@ export default function DefineTheVibe() {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [currentValue, setCurrentValue] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [countryCode, setCountryCode] = useState<string>('+1');
+
+  // Fetch country code on mount
+  useEffect(() => {
+    const fetchCountryCode = async () => {
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        const code = data.country_calling_code || '+1';
+        setCountryCode(code.startsWith('+') ? code : `+${code}`);
+      } catch (error) {
+        // Default to +1 if fetch fails
+        setCountryCode('+1');
+      }
+    };
+    fetchCountryCode();
+  }, []);
 
   // Animation variants
   const fadeIn = {
@@ -232,7 +249,9 @@ export default function DefineTheVibe() {
 
     // If we have a reasonable number of digits, use it as the target
     if (cleanNumber.length >= 7) {
-      return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+      // Prepend the country code
+      const fullNumber = `${countryCode}${cleanNumber}`;
+      return `https://wa.me/${fullNumber}?text=${encodeURIComponent(message)}`;
     }
 
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
@@ -272,6 +291,14 @@ export default function DefineTheVibe() {
               variants={fadeIn}
               className="text-center space-y-8"
             >
+              <div className="flex justify-end mb-4">
+                <Link
+                  href="/astra"
+                  className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all"
+                >
+                  Explore Astra Services
+                </Link>
+              </div>
               <div className="space-y-4">
                 <motion.div
                   initial={{ scale: 0 }}
@@ -281,7 +308,7 @@ export default function DefineTheVibe() {
                 >
                   <Heart className="w-12 h-12 text-rose-500 fill-rose-500" />
                 </motion.div>
-                <h1 className="text-4xl md:text-6xl font-black tracking-tighter bg-gradient-to-r from-white via-rose-200 to-rose-400 bg-clip-text text-transparent">
+                <h1 className="text-4xl md:text-6xl font-black tracking-tighter bg-linear-to-r from-white via-rose-200 to-rose-400 bg-clip-text text-transparent">
                   Define the Vibe
                 </h1>
                 <p className="text-zinc-400 text-lg md:text-xl max-w-md mx-auto leading-relaxed">
@@ -296,9 +323,9 @@ export default function DefineTheVibe() {
                     whileHover={{ scale: 1.02, translateY: -4 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleStart(rel)}
-                    className="group relative p-6 text-left bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl overflow-hidden transition-all hover:border-white/20 hover:bg-white/[0.08]"
+                    className="group relative p-6 text-left bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl overflow-hidden transition-all hover:border-white/20 hover:bg-white/8"
                   >
-                    <div className={`absolute top-0 right-0 w-32 h-32 opacity-10 bg-gradient-to-br ${rel.gradient} blur-3xl group-hover:opacity-20 transition-opacity`} />
+                    <div className={`absolute top-0 right-0 w-32 h-32 opacity-10 bg-linear-to-br ${rel.gradient} blur-3xl group-hover:opacity-20 transition-opacity`} />
                     <div className="relative z-10 space-y-3">
                       <div className={`w-12 h-12 rounded-2xl ${rel.color} flex items-center justify-center shadow-lg`}>
                         {rel.icon}
@@ -342,7 +369,7 @@ export default function DefineTheVibe() {
               {/* Progress Bar */}
               <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
                 <motion.div
-                  className={`h-full bg-gradient-to-r ${selectedRel.gradient}`}
+                  className={`h-full bg-linear-to-r ${selectedRel.gradient}`}
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
@@ -367,15 +394,32 @@ export default function DefineTheVibe() {
                     <div className="mt-8">
                       {selectedRel.questions[currentIndex].type === 'text' && (
                         <div className="space-y-4">
-                          <input
-                            autoFocus
-                            type="text"
-                            value={currentValue}
-                            onChange={(e) => setCurrentValue(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleNext()}
-                            placeholder="Type your answer..."
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-lg focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all placeholder:text-zinc-600"
-                          />
+                          {selectedRel.questions[currentIndex].id === 22 && (
+                            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl p-4">
+                              <span className="text-lg font-bold text-zinc-400 whitespace-nowrap">{countryCode}</span>
+                              <input
+                                autoFocus
+                                type="text"
+                                inputMode="tel"
+                                value={currentValue}
+                                onChange={(e) => setCurrentValue(e.target.value.replace(/\D/g, ''))}
+                                onKeyDown={(e) => e.key === 'Enter' && handleNext()}
+                                placeholder="Enter phone number"
+                                className="flex-1 bg-transparent text-lg focus:outline-none placeholder:text-zinc-600"
+                              />
+                            </div>
+                          )}
+                          {selectedRel.questions[currentIndex].id !== 22 && (
+                            <input
+                              autoFocus
+                              type="text"
+                              value={currentValue}
+                              onChange={(e) => setCurrentValue(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleNext()}
+                              placeholder="Type your answer..."
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-lg focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all placeholder:text-zinc-600"
+                            />
+                          )}
                           {selectedRel.questions[currentIndex].id === 22 && (
                             <button
                               onClick={() => {
@@ -459,7 +503,7 @@ export default function DefineTheVibe() {
                     <button
                       onClick={handleNext}
                       disabled={!currentValue}
-                      className="w-full mt-8 py-5 rounded-2xl bg-gradient-to-r from-rose-500 to-rose-600 font-bold text-xl shadow-lg shadow-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+                      className="w-full mt-8 py-5 rounded-2xl bg-linear-to-r from-rose-500 to-rose-600 font-bold text-xl shadow-lg shadow-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
                       {currentIndex === 21 ? 'See Verdict' : 'Continue'}
                       <ArrowRight className="w-6 h-6" />
@@ -489,7 +533,7 @@ export default function DefineTheVibe() {
                   />
                   <Trophy className="w-12 h-12 text-rose-500 relative z-10" />
                 </div>
-                <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-white to-rose-400 bg-clip-text text-transparent">
+                <h1 className="text-4xl md:text-5xl font-black bg-linear-to-r from-white to-rose-400 bg-clip-text text-transparent">
                   Audit Complete
                 </h1>
                 <p className="text-zinc-400 text-lg">
@@ -517,7 +561,7 @@ export default function DefineTheVibe() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.5 }}
-                className="group relative p-6 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden hover:border-indigo-500/30 transition-all text-left"
+                className="group relative p-6 bg-linear-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden hover:border-indigo-500/30 transition-all text-left"
               >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 blur-2xl rounded-full -mr-8 -mt-8 group-hover:bg-indigo-500/20 transition-all" />
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 relative z-10">
@@ -529,12 +573,11 @@ export default function DefineTheVibe() {
                     <p className="text-sm text-zinc-400">Want a viral web app like this? Astra IT specializes in high-end development and ROI-driven marketing.</p>
                   </div>
                   <Link
-                    href="https://astra.it.com/"
-                    target="_blank"
+                    href="/astra"
                     className="sm:ml-auto w-full sm:w-auto px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                   >
                     <Globe className="w-4 h-4" />
-                    Visit Astra
+                    Learn More
                   </Link>
                 </div>
               </motion.div>
@@ -580,7 +623,7 @@ export default function DefineTheVibe() {
 
       <footer className="fixed bottom-8 left-0 right-0 z-10 text-center">
         <p className="text-zinc-600 text-[10px] md:text-xs font-bold uppercase tracking-[0.3em]">
-          &copy; 2024 Define The Vibe &bull; Made by <Link href="https://astra.it.com/">astra.it.com</Link>
+          &copy; 2024 Define The Vibe &bull; Made by <Link href="/astra">astra.it.com</Link>
         </p>
       </footer>
     </main>
