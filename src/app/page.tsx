@@ -240,7 +240,7 @@ export default function DefineTheVibe() {
     if (!selectedRel) return '';
     let message = `*Vibe Audit Result: ${selectedRel.title}*\n\n`;
     selectedRel.questions.forEach((q, idx) => {
-      message += `*Q${idx + 1}:* ${answers[q.id]}\n`;
+      message += `*Q${idx + 1}: ${q.text}*\n${answers[q.id]}\n\n`;
     });
 
     // Check if Question 22 (phone number) was answered
@@ -261,7 +261,7 @@ export default function DefineTheVibe() {
     if (!selectedRel) return;
     let message = `Vibe Audit Result: ${selectedRel.title}\n\n`;
     selectedRel.questions.forEach((q, idx) => {
-      message += `Q${idx + 1}: ${answers[q.id]}\n`;
+      message += `Q${idx + 1}: ${q.text}\n${answers[q.id]}\n\n`;
     });
     navigator.clipboard.writeText(message);
     setCopied(true);
